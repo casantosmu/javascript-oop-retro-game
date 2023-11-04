@@ -29,7 +29,18 @@ class Player {
    * Update horizontal position of the player
    */
   update() {
-    this.x += this.speed;
+    if (this.game.keys.includes("ArrowLeft")) {
+      this.x -= this.speed;
+    }
+    if (this.game.keys.includes("ArrowRight")) {
+      this.x += this.speed;
+    }
+
+    if (this.x < 0) {
+      this.x = 0;
+    } else if (this.x > this.game.width - this.width) {
+      this.x = this.game.width - this.width;
+    }
   }
 }
 
@@ -54,7 +65,22 @@ class Game {
     this.canvas = canvas;
     this.width = this.canvas.width;
     this.height = this.canvas.height;
+    this.keys = [];
     this.player = new Player(this);
+
+    window.addEventListener("keydown", (event) => {
+      if (!this.keys.includes(event.key)) {
+        this.keys.push(event.key);
+      }
+    });
+
+    window.addEventListener("keyup", (event) => {
+      const keyIndex = this.keys.indexOf(event.key);
+
+      if (keyIndex > -1) {
+        this.keys.splice(keyIndex, 1);
+      }
+    });
   }
 
   /**
