@@ -118,7 +118,94 @@ class Projectile {
 /**
  * Class that draws and animates space invaders in the game.
  */
-class Enemy {}
+class Enemy {
+  /**
+   * @param {Game} game - Reference to game
+   * @param {number} positionX - Position of the enemy within the wave
+   * @param {number} positionY - Position of the enemy within the wave
+   */
+  constructor(game, positionX, positionY) {
+    this.game = game;
+    this.width = this.game.enemySize;
+    this.height = this.game.enemySize;
+    this.x = 0;
+    this.y = 0;
+    this.positionX = positionX;
+    this.positionY = positionY;
+  }
+
+  /**
+   * @param {CanvasRenderingContext2D} context - Reference to context canvas
+   */
+  draw(context) {
+    context.strokeRect(this.x, this.y, this.width, this.height);
+  }
+
+  /**
+   * Update position of the enemy
+   * @param {number} x - Set x position of the enemy relative to the wave
+   * @param {number} y - Set y position of the enemy relative to the wave
+   */
+  update(x, y) {
+    this.x = this.positionX + x;
+    this.y = this.positionY + y;
+  }
+}
+
+/**
+ * Class that draws and animates waves of enemies.
+ */
+class Wave {
+  /**
+   * @param {Game} game - Reference to game
+   */
+  constructor(game) {
+    this.game = game;
+    this.width = this.game.columns * this.game.enemySize;
+    this.height = this.game.rows * this.game.enemySize;
+    this.x = 0;
+    this.y = -this.height;
+    this.speedX = 3;
+    this.speedY = 0;
+    /** @type {Enemy[]} */
+    this.enemies = [];
+    this.#create();
+  }
+
+  /**
+   * @param {CanvasRenderingContext2D} context - Reference to context canvas
+   */
+  draw(context) {
+    if (this.y < 0) {
+      this.y += 5;
+    }
+    this.speedY = 0;
+    if (this.x < 0 || this.x > this.game.width - this.width) {
+      this.speedX *= -1;
+      this.speedY = this.game.enemySize;
+    }
+    this.x += this.speedX;
+    this.y += this.speedY;
+
+    for (const enemy of this.enemies) {
+      enemy.update(this.x, this.y);
+      enemy.draw(context);
+    }
+  }
+
+  /**
+   * Create the grid of the wave
+   */
+  #create() {
+    for (let y = 0; y < this.game.rows; y++) {
+      for (let x = 0; x < this.game.columns; x++) {
+        const enemyX = x * this.game.enemySize;
+        const enemyY = y * this.game.enemySize;
+        this.enemies.push(new Enemy(this.game, enemyX, enemyY));
+      }
+    }
+  }
+}
 
 /**
  * Class that contains the main logic of the codebase. It holds everything together.
@@ -141,6 +228,14 @@ class Game {
     this.projectilesPool = [];
     this.numberOfProjectiles = 10;
     this.#createProjectiles();
+
+    this.columns = 3;
+    this.rows = 3;
+    this.enemySize = 60;
+
+    /** @type {Wave[]} */
+    this.waves = [];
+    this.waves.push(new Wave(this));
 
     window.addEventListener("keydown", (event) => {
       if (!this.keys.includes(event.key)) {
@@ -168,6 +263,10 @@ class Game {
     for (const projectile of this.projectilesPool) {
       projectile.update();
       projectile.draw(context);
+    }
+
+    for (const wave of this.waves) {
+      wave.draw(context);
     }
   }
 
@@ -215,6 +314,8 @@ window.addEventListener("load", () => {
   }
 
   ctx.fillStyle = "white";
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 5;
 
   const game = new Game(canvas);
 
