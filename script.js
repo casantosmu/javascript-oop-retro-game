@@ -214,6 +214,8 @@ window.addEventListener("load", () => {
     );
   }
 
+  ctx.fillStyle = "white";
+
   const game = new Game(canvas);
 
   const animate = () => {
