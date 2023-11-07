@@ -3,6 +3,11 @@
 "use strict";
 
 /**
+ * Rectangle
+ * @typedef {{x: number, y: number, width: number, height: number}} Rectangle
+ */
+
+/**
  * Class that handles the movement and animation of the main player character. It's unique in the game.
  */
 class Player {
@@ -34,9 +39,6 @@ class Player {
     }
     if (this.game.keys.includes("ArrowRight")) {
       this.x += this.speed;
-    }
-    if (this.game.keys.includes("1")) {
-      this.shoot();
     }
 
     if (this.x < -this.width * 0.5) {
@@ -132,6 +134,7 @@ class Enemy {
     this.y = 0;
     this.positionX = positionX;
     this.positionY = positionY;
+    this.markedForDeletion = false;
   }
 
   /**
@@ -149,6 +152,13 @@ class Enemy {
   update(x, y) {
     this.x = this.positionX + x;
     this.y = this.positionY + y;
+
+    for (const projectile of this.game.projectilesPool) {
+      if (!projectile.free && this.game.checkCollision(this, projectile)) {
+        this.markedForDeletion = true;
+        projectile.reset();
+      }
+    }
   }
 }
 
@@ -191,6 +201,8 @@ class Wave {
       enemy.update(this.x, this.y);
       enemy.draw(context);
     }
+
+    this.enemies = this.enemies.filter((enemy) => !enemy.markedForDeletion);
   }
 
   /**
@@ -241,6 +253,10 @@ class Game {
       if (!this.keys.includes(event.key)) {
         this.keys.push(event.key);
       }
+
+      if (event.key === "1") {
+        this.player.shoot();
+      }
     });
 
     window.addEventListener("keyup", (event) => {
@@ -289,10 +305,24 @@ class Game {
       }
     }
   }
+
+  /**
+   * Collision detection between two rectangles
+   * @param {Rectangle} a - Rectangle A
+   * @param {Rectangle} b - Rectangle B
+   */
+  checkCollision(a, b) {
+    return (
+      a.x < b.x + b.width &&
+      a.x + a.width > b.x &&
+      a.y < b.y + b.height &&
+      a.y + a.height > b.y
+    );
+  }
 }
 
 window.addEventListener("load", () => {
-  const canvasId = "#canvas1";
+  const canvasId = "#canvas";
   const canvas = document.querySelector(canvasId);
 
   if (!canvas) {
